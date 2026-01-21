@@ -1,0 +1,7 @@
+{
+  "name": "The Daily Drucker AI",
+  "description": "A digital companion for Peter Drucker's daily insights, featuring voice-enabled AI analysis to connect management theory with current events.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
