@@ -3,7 +3,7 @@ import { DruckerEntry, DailyAnalysis } from "./types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const modelName = "gemini-2.0-flash";
+const modelName = "gemini-3-flash-preview";
 
 // Retry helper for handling 503 errors
 const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> => {
