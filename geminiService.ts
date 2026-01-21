@@ -3,7 +3,25 @@ import { DruckerEntry, DailyAnalysis } from "./types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const modelName = "gemini-3-flash-preview";
+const modelName = "gemini-2.0-flash";
+
+// Retry helper for handling 503 errors
+const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> => {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      const isRetryable = error?.status === 503 || error?.message?.includes('503') || error?.message?.includes('overloaded');
+      if (isRetryable && attempt < maxRetries - 1) {
+        const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error('Max retries exceeded');
+};
 
 export const getDruckerInsight = async (entry: DruckerEntry, userQuery: string): Promise<string> => {
   try {
@@ -26,13 +44,13 @@ export const getDruckerInsight = async (entry: DruckerEntry, userQuery: string):
     4. Keep the tone professional yet conversational.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await withRetry(() => ai.models.generateContent({
       model: modelName,
       contents: prompt,
       config: {
         thinkingConfig: { thinkingBudget: 0 }
       }
-    });
+    }));
 
     return response.text || "I apologize, I couldn't generate an insight at this moment.";
   } catch (error) {
@@ -45,7 +63,7 @@ export const getDailyBriefing = async (entry: DruckerEntry): Promise<DailyAnalys
   try {
     const prompt = `
       Analyze this Peter Drucker excerpt and provide a modern executive briefing.
-      
+
       Title: ${entry.title}
       Text: ${entry.body}
       Action: ${entry.actionPoint}
@@ -56,7 +74,7 @@ export const getDailyBriefing = async (entry: DruckerEntry): Promise<DailyAnalys
       3. Challenge Question: One provocative question to ask oneself based on this text.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await withRetry(() => ai.models.generateContent({
       model: modelName,
       contents: prompt,
       config: {
@@ -65,7 +83,7 @@ export const getDailyBriefing = async (entry: DruckerEntry): Promise<DailyAnalys
           type: Type.OBJECT,
           properties: {
             modernRelevance: { type: Type.STRING },
-            keyTakeaways: { 
+            keyTakeaways: {
               type: Type.ARRAY,
               items: { type: Type.STRING }
             },
@@ -74,7 +92,7 @@ export const getDailyBriefing = async (entry: DruckerEntry): Promise<DailyAnalys
           required: ["modernRelevance", "keyTakeaways", "challengeQuestion"]
         }
       }
-    });
+    }));
 
     if (response.text) {
       return JSON.parse(response.text) as DailyAnalysis;

@@ -8,7 +8,7 @@ interface InsightAssistantProps {
 }
 
 const InsightAssistant: React.FC<InsightAssistantProps> = ({ entry }) => {
-  const { isListening, transcript, startListening, stopListening, error } = useSpeechRecognition();
+  const { isListening, transcript, startListening, stopListening, error, isSupported } = useSpeechRecognition();
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -52,31 +52,33 @@ const InsightAssistant: React.FC<InsightAssistantProps> = ({ entry }) => {
               className="w-full p-6 pr-16 text-lg font-serif text-stone-800 bg-transparent border-none focus:ring-0 resize-none placeholder:text-stone-300 placeholder:font-sans min-h-[120px]"
             />
             
-            {/* Mic Button - Floating */}
-            <button 
-              onClick={isListening ? stopListening : startListening}
-              className={`absolute right-4 bottom-4 p-3 rounded-full transition-all duration-300 ${
-                isListening 
-                  ? 'bg-rose-500 text-white shadow-lg shadow-rose-200 scale-110' 
-                  : 'bg-stone-100 text-stone-400 hover:bg-stone-200 hover:text-stone-600'
-              }`}
-              title="Speak"
-            >
-              {isListening ? (
-                <div className="flex gap-0.5 h-5 items-center justify-center w-5">
-                   <span className="w-1 h-3 bg-white animate-[pulse_0.5s_ease-in-out_infinite]"></span>
-                   <span className="w-1 h-5 bg-white animate-[pulse_0.5s_ease-in-out_0.1s_infinite]"></span>
-                   <span className="w-1 h-3 bg-white animate-[pulse_0.5s_ease-in-out_0.2s_infinite]"></span>
-                </div>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-                </svg>
-              )}
-            </button>
+            {/* Mic Button - Floating (only shown when speech is supported) */}
+            {isSupported && (
+              <button
+                onClick={isListening ? stopListening : startListening}
+                className={`absolute right-4 bottom-4 p-3 rounded-full transition-all duration-300 ${
+                  isListening
+                    ? 'bg-rose-500 text-white shadow-lg shadow-rose-200 scale-110'
+                    : 'bg-stone-100 text-stone-400 hover:bg-stone-200 hover:text-stone-600'
+                }`}
+                title="Speak"
+              >
+                {isListening ? (
+                  <div className="flex gap-0.5 h-5 items-center justify-center w-5">
+                     <span className="w-1 h-3 bg-white animate-[pulse_0.5s_ease-in-out_infinite]"></span>
+                     <span className="w-1 h-5 bg-white animate-[pulse_0.5s_ease-in-out_0.1s_infinite]"></span>
+                     <span className="w-1 h-3 bg-white animate-[pulse_0.5s_ease-in-out_0.2s_infinite]"></span>
+                  </div>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
           
-          {error && <div className="px-6 pb-2 text-rose-500 text-xs font-medium">{error}</div>}
+          {error && isSupported && <div className="px-6 pb-2 text-rose-500 text-xs font-medium">{error}</div>}
 
           {/* Action Bar */}
           <div className="px-6 pb-6 pt-2 flex justify-between items-center border-t border-stone-50">

@@ -1,15 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+const isSpeechSupported = () =>
+  typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window);
+
 export const useSpeechRecognition = () => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
-  
+  const [isSupported] = useState(isSpeechSupported);
+
   // Use a ref to hold the recognition instance
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    if (isSupported) {
       // @ts-ignore
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
@@ -46,10 +50,8 @@ export const useSpeechRecognition = () => {
         setError(event.error);
         setIsListening(false);
       };
-    } else {
-      setError("Speech recognition is not supported in this browser.");
     }
-  }, []);
+  }, [isSupported]);
 
   const startListening = useCallback(() => {
     setTranscript('');
@@ -69,5 +71,5 @@ export const useSpeechRecognition = () => {
     }
   }, []);
 
-  return { isListening, transcript, startListening, stopListening, error, resetTranscript: () => setTranscript('') };
+  return { isListening, transcript, startListening, stopListening, error, isSupported, resetTranscript: () => setTranscript('') };
 };
